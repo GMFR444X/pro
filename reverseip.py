@@ -1,17 +1,14 @@
 import requests
+from bs4 import BeautifulSoup
 
 def find_domains_by_ip(ip):
     try:
-        url = f"https://api.hackertarget.com/reverseiplookup/?q={ip}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            domains = response.text.strip().split("\n")
-            return '\n'.join(domains)
-        else:
-            return f"Error: {response.status_code} - {response.reason}"
+        response = requests.get(f"https://www.yougetsignal.com/tools/web-sites-on-web-server/php/get-web-sites-on-web-server-json.php", params={'remoteAddress': ip})
+        data = response.json()
+        domains = [site['domain'] for site in data['sites']]
+        return domains
     except Exception as e:
-        print(f"Error finding domains by IP: {e}")
-        return f"Error: {e}"
+        return f"Error finding domains by IP: {e}"
 
 if __name__ == "__main__":
     import sys

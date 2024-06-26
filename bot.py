@@ -1,7 +1,6 @@
 import logging
 from telegram import Update, InputFile
-from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext
-from telegram.ext.filters import Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, CallbackContext, Filters
 import requests
 from bs4 import BeautifulSoup
 import subprocess

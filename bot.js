@@ -11,11 +11,11 @@ bot.start((ctx) => {
     const welcomeMessage = `Halo selamat malam ${username}! 👋🏻\n\nSaya adalah bot yang dibuat oleh @cadelXploit.\n\nUntuk melihat menu lainnya, bisa pencet tombol di bawah ini.\n\n🗓 TANGGAL: ${currentDate}.`;
 
     const menuKeyboard = Markup.inlineKeyboard([
-        Markup.button.url('Menu dan Command', 'https://yourwebsite.com/menu'),
-        Markup.button.callback('Owner', 'owner_button')
+        Markup.button.callback('Menu dan Command', 'menu_button'),
+        Markup.button.url('Owner', 'https://t.me/cadelXploit')
     ]);
 
-    ctx.reply(welcomeMessage, menuKeyboard);
+    ctx.replyWithHTML(welcomeMessage, menuKeyboard);
 });
 
 // Command handlers
@@ -26,13 +26,19 @@ bot.command('ddos', async (ctx) => {
     }
 
     const process = spawn('python3', ['ddos.py', url]);
+    let output = '';
+
     process.stdout.on('data', (data) => {
-        ctx.reply(data.toString());
+        output += data.toString();
     });
 
     process.stderr.on('data', (data) => {
         console.error(`Error: ${data}`);
-        ctx.reply(`Error: ${data}`);
+        output += data.toString();
+    });
+
+    process.on('close', () => {
+        ctx.reply(output.trim() || 'No response from DDoS script.');
     });
 });
 
@@ -43,13 +49,19 @@ bot.command('subdomain', async (ctx) => {
     }
 
     const process = spawn('python3', ['subdomain.py', url]);
+    let output = '';
+
     process.stdout.on('data', (data) => {
-        ctx.reply(data.toString());
+        output += data.toString();
     });
 
     process.stderr.on('data', (data) => {
         console.error(`Error: ${data}`);
-        ctx.reply(`Error: ${data}`);
+        output += data.toString();
+    });
+
+    process.on('close', () => {
+        ctx.reply(output.trim() || 'No response from subdomain script.');
     });
 });
 
@@ -60,13 +72,19 @@ bot.command('reverseip', async (ctx) => {
     }
 
     const process = spawn('python3', ['reverseip.py', ip]);
+    let output = '';
+
     process.stdout.on('data', (data) => {
-        ctx.reply(data.toString());
+        output += data.toString();
     });
 
     process.stderr.on('data', (data) => {
         console.error(`Error: ${data}`);
-        ctx.reply(`Error: ${data}`);
+        output += data.toString();
+    });
+
+    process.on('close', () => {
+        ctx.reply(output.trim() || 'No response from reverse IP script.');
     });
 });
 
@@ -76,14 +94,37 @@ bot.command('wpcek', async (ctx) => {
         return ctx.reply('Please upload a .txt file containing targets after /wpcek command.');
     }
 
-    const process = spawn('python3', ['wpcek.py', file.file_id]);
+    const fileId = file.file_id;
+    const fileLink = await ctx.telegram.getFileLink(fileId);
+
+    ctx.reply('Memulai proses checker WordPress, harap tunggu sebentar...');
+
+    // Mock progress, replace with actual logic
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += 20;
+        if (progress <= 100) {
+            ctx.reply(`Proses ${progress}%`);
+        } else {
+            clearInterval(interval);
+        }
+    }, 1000);
+
+    const process = spawn('python3', ['wpcek.py', fileId]);
+    let output = '';
+
     process.stdout.on('data', (data) => {
-        ctx.reply(data.toString());
+        output += data.toString();
     });
 
     process.stderr.on('data', (data) => {
         console.error(`Error: ${data}`);
-        ctx.reply(`Error: ${data}`);
+        output += data.toString();
+    });
+
+    process.on('close', () => {
+        clearInterval(interval);
+        ctx.reply(output.trim() || 'No response from WordPress checker script.');
     });
 });
 
@@ -94,19 +135,35 @@ bot.command('dapacek', async (ctx) => {
     }
 
     const process = spawn('python3', ['dapacek.py', url]);
+    let output = '';
+
     process.stdout.on('data', (data) => {
-        ctx.reply(data.toString());
+        output += data.toString();
     });
 
     process.stderr.on('data', (data) => {
         console.error(`Error: ${data}`);
-        ctx.reply(`Error: ${data}`);
+        output += data.toString();
+    });
+
+    process.on('close', () => {
+        ctx.reply(output.trim() || 'No response from DA PA checker script.');
     });
 });
 
-// Owner button callback handler
-bot.action('owner_button', (ctx) => {
-    ctx.reply('Jika Anda ingin menghubungi owner, silakan klik link ini: https://t.me/cadelXploit');
+// Menu button callback handler
+bot.action('menu_button', (ctx) => {
+    const menuMessage = `
+📋 Menu dan Command:
+
+1. <b>DDoS</b>: /ddos <i>&lt;url&gt;</i> - Melakukan serangan DDoS terhadap URL yang diberikan.
+2. <b>Subdomain Search</b>: /subdomain <i>&lt;url&gt;</i> - Mencari subdomain dari URL yang diberikan.
+3. <b>Reverse IP Lookup</b>: /reverseip <i>&lt;ip&gt;</i> - Mencari domain berdasarkan IP yang diberikan.
+4. <b>WordPress Checker</b>: /wpcek - Memeriksa login WordPress dari file .txt yang diunggah.
+5. <b>DA PA Checker</b>: /dapacek <i>&lt;url&gt;</i> - Memeriksa Domain Authority (DA) dan Page Authority (PA) dari URL yang diberikan.
+`;
+
+    ctx.replyWithHTML(menuMessage);
 });
 
 bot.launch();

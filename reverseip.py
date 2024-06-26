@@ -8,10 +8,10 @@ def find_domains_by_ip(ip):
             domains = response.text.strip().split("\n")
             return '\n'.join(domains)
         else:
-            return ""
+            return f"Error: {response.status_code} - {response.reason}"
     except Exception as e:
         print(f"Error finding domains by IP: {e}")
-        return ""
+        return f"Error: {e}"
 
 if __name__ == "__main__":
     import sys

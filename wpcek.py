@@ -1,9 +1,8 @@
 import requests
 
-def check_wordpress_logins(file_id):
+def check_wordpress_logins(file_path):
     results = []
     try:
-        file_path = f"6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0/{file_id}"
         with open(file_path, 'r') as file:
             lines = file.readlines()
             for line in lines:

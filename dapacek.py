@@ -1,23 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
 
-def check_da_pa(url):
+def check_da_pa_smallseotools(url):
     try:
-        response = requests.get(f"https://www.websiteseochecker.com/bulk-check-page-authority/?url={url}")
+        response = requests.get(f"https://smallseotools.com/domain-authority-checker/?q={url}")
         soup = BeautifulSoup(response.content, 'html.parser')
-        da_tag = soup.find('input', {'name': 'da'})
-        pa_tag = soup.find('input', {'name': 'pa'})
-        if da_tag and pa_tag:
-            da = da_tag.get('value')
-            pa = pa_tag.get('value')
-            return f"DA: {da}, PA: {pa}"
-        else:
-            return "Error: DA PA data not found"
+        da = soup.find('div', {'class': 'da-result'}).find('span').text.strip()
+        pa = soup.find('div', {'class': 'pa-result'}).find('span').text.strip()
+        return f"DA: {da}, PA: {pa}"
     except Exception as e:
-        print(f"Error checking DA PA: {e}")
-        return f"Error: {e}"
+        return f"Error checking DA PA: {e}"
 
 if __name__ == "__main__":
     import sys
     url = sys.argv[1]
-    print(check_da_pa(url))
+    print(check_da_pa_smallseotools(url))

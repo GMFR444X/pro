@@ -1,16 +1,35 @@
 import requests
 from bs4 import BeautifulSoup
 
-def find_domains_by_ip(ip):
+def find_subdomains(url):
     try:
-        response = requests.get(f"https://www.yougetsignal.com/tools/web-sites-on-web-server/php/get-web-sites-on-web-server-json.php", params={'remoteAddress': ip})
-        data = response.json()
-        domains = [site['domain'] for site in data['sites']]
-        return domains
+        response = requests.get(f"https://dnsdumpster.com/")
+        soup = BeautifulSoup(response.content, 'html.parser')
+        csrfmiddlewaretoken = soup.find('input', {'name': 'csrfmiddlewaretoken'}).get('value')
+        headers = {
+            'Referer': 'https://dnsdumpster.com/',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        cookies = {
+            'csrftoken': csrfmiddlewaretoken
+        }
+        data = {
+            'csrfmiddlewaretoken': csrfmiddlewaretoken,
+            'targetip': url
+        }
+        session = requests.Session()
+        response = session.post('https://dnsdumpster.com/', headers=headers, cookies=cookies, data=data)
+        soup = BeautifulSoup(response.content, 'html.parser')
+        subdomains = set()
+        for td in soup.find_all('td'):
+            subdomain = td.text.strip()
+            if subdomain.endswith(f'.{url}'):
+                subdomains.add(subdomain)
+        return subdomains
     except Exception as e:
-        return f"Error finding domains by IP: {e}"
+        return f"Error finding subdomains: {e}"
 
 if __name__ == "__main__":
     import sys
-    ip = sys.argv[1]
-    print(find_domains_by_ip(ip))
+    url = sys.argv[1]
+    print(find_subdomains(url))

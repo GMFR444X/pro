@@ -1,14 +1,19 @@
 import requests
-from bs4 import BeautifulSoup
 
 def find_domains_by_ip(ip):
     try:
-        response = requests.get(f"https://www.yougetsignal.com/tools/web-sites-on-web-server/php/get-web-sites-on-web-server-json.php", params={'remoteAddress': ip})
+        url = f"https://www.yougetsignal.com/tools/web-sites-on-web-server/php/get-web-sites-on-web-server-json.php?remoteAddress={ip}"
+        response = requests.get(url)
         data = response.json()
-        domains = [site['domain'] for site in data['sites']]
+
+        domains = []
+        for site in data["sites"]:
+            domains.append(site["domain"])
+        
         return domains
     except Exception as e:
-        return f"Error finding domains by IP: {e}"
+        print(f"Error finding domains by IP: {e}")
+        return []
 
 if __name__ == "__main__":
     import sys

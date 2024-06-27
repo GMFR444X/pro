@@ -1,5 +1,6 @@
 import requests
 import threading
+import sys
 
 def check_website(website, output_file):
     try:
@@ -40,10 +41,12 @@ def main(websites_file, output_file, num_threads):
         thread.join()
 
 if __name__ == "__main__":
-    # Ambil input dari pengguna
-    websites_file = input("Input website list: ")
-    output_file = "goodshell.txt"
-    num_threads = int(input("Threads: "))
+    if len(sys.argv) != 3:
+        print("Usage: python shell.py <filename> <num_threads>")
+        sys.exit(1)
 
-    # Panggil fungsi main dengan input dari pengguna
+    websites_file = sys.argv[1]
+    output_file = "goodshell.txt"
+    num_threads = int(sys.argv[2])
+
     main(websites_file, output_file, num_threads)

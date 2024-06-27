@@ -135,7 +135,7 @@ bot.onText(/\/wpcek/, (msg) => {
                     progress += 10; // Increment progress by 10%
                 }, 5000); // Check progress every 5 seconds
 
-                exec(`python3 wpcek.py ${filePath} 10`, (error, stdout, stderr) => {
+                exec(`python3 wpcek.py ${filePath} 20`, (error, stdout, stderr) => {
                     clearInterval(intervalId); // Stop checking progress
                     if (error) {
                         bot.sendMessage(chatId, `Error: ${error.message}`);
@@ -208,7 +208,7 @@ bot.onText(/\/cpcek/, (msg) => {
                     progress += 10; // Increment progress by 10%
                 }, 5000); // Check progress every 5 seconds
 
-                exec(`python3 cp.py ${filePath} 10`, (error, stdout, stderr) => {
+                exec(`python3 cp.py ${filePath} 20`, (error, stdout, stderr) => {
                     clearInterval(intervalId); // Stop checking progress
                     if (error) {
                         bot.sendMessage(chatId, `Error: ${error.message}`);
@@ -301,7 +301,7 @@ bot.onText(/\/shellcek/, (msg) => {
                     progress += 10; // Increment progress by 10%
                 }, 5000); // Check progress every 5 seconds
 
-                exec(`python3 shell.py ${filePath} 10`, (error, stdout, stderr) => {
+                exec(`python3 shell.py ${filePath} 20`, (error, stdout, stderr) => {
                     clearInterval(intervalId); // Stop checking progress
                     if (error) {
                         bot.sendMessage(chatId, `Error: ${error.message}`);

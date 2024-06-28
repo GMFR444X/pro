@@ -24,6 +24,8 @@ const runPythonScript = (script, args, chatId, outputFiles) => {
           if (stats.size > 0) {
             await bot.sendDocument(chatId, filePath);
             resultsSent = true;
+            // Delete the file after sending it
+            await fs.unlink(filePath);
           }
         } catch (err) {
           // Ignore file not found or empty file errors

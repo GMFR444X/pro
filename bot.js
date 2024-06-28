@@ -75,18 +75,17 @@ const runPythonScript = (script, args, chatId, outputFiles, progressFile) => {
 // Handle /start command
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-  const options = {
-    reply_markup: {
-      keyboard: [
-        ['Menu Exploit'],
-        ['/wpcek', '/cpcek', '/shellcek'],
-        ['Menu Lainnya', '/ai <pesan>']
-      ],
-      resize_keyboard: true,
-      one_time_keyboard: true
-    }
-  };
-  bot.sendMessage(chatId, 'Pilih menu:', options);
+  const message = `
+Pilih menu:
+
+   • Menu Exploit
+   - /wpcek
+   - /cpcek
+   - /shellcek
+   • Menu Lainnya
+   - /ai <pesan>
+  `;
+  bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 });
 
 // Handle /wpcek command

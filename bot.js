@@ -23,6 +23,8 @@ const updateProgress = async (chatId, messageId, progressFile) => {
   let progress = await readProgress(progressFile);
   if (progress >= 100) {
     progress = 100;
+  } else {
+    progress += 1;
   }
   const options = {
     reply_markup: {
@@ -31,6 +33,13 @@ const updateProgress = async (chatId, messageId, progressFile) => {
     parse_mode: 'Markdown'
   };
   await bot.editMessageText(`*Proses Cek Tunggu Dulu Bray*`, { chat_id: chatId, message_id: messageId, ...options });
+
+  // Schedule the next update if progress is not 100%
+  if (progress < 100) {
+    setTimeout(() => {
+      updateProgress(chatId, messageId, progressFile);
+    }, 1000); // Update every 1 second
+  }
 };
 
 // Helper function to run a Python script and handle its output
@@ -42,6 +51,7 @@ const runPythonScript = (script, args, chatId, outputFiles, progressFile) => {
     const pythonProcess = spawn('python3', [script, ...args]);
 
     pythonProcess.stdout.on('data', async (data) => {
+      // Assuming progress data is sent from the Python script
       const progress = parseInt(data.toString().trim(), 10);
       if (!isNaN(progress) && progress >= 0 && progress <= 100) {
         await updateProgress(chatId, messageId, progressFile);

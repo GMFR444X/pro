@@ -8,55 +8,10 @@ const axios = require('axios');
 const token = '6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0';
 const bot = new TelegramBot(token, { polling: true });
 
-// Function to read the progress from the progress file
-const readProgress = async (progressFile) => {
-  try {
-    const progress = await fs.readFile(progressFile, 'utf-8');
-    return parseInt(progress.trim(), 10);
-  } catch (err) {
-    return 0;
-  }
-};
-
-// Function to update progress
-const updateProgress = async (chatId, messageId, progressFile) => {
-  let progress = await readProgress(progressFile);
-  if (progress >= 100) {
-    progress = 100;
-  } else {
-    progress += 1;
-  }
-  const options = {
-    reply_markup: {
-      inline_keyboard: [[{ text: `Proses ${progress}%`, callback_data: 'noop' }]]
-    },
-    parse_mode: 'Markdown'
-  };
-  await bot.editMessageText(`*Proses Cek Tunggu Dulu Bray*`, { chat_id: chatId, message_id: messageId, ...options });
-
-  // Schedule the next update if progress is not 100%
-  if (progress < 100) {
-    setTimeout(() => {
-      updateProgress(chatId, messageId, progressFile);
-    }, 1000); // Update every 1 second
-  }
-};
-
 // Helper function to run a Python script and handle its output
-const runPythonScript = (script, args, chatId, outputFiles, progressFile) => {
-  bot.sendMessage(chatId, '*Proses Cek Tunggu Dulu Bray*', { parse_mode: 'Markdown' }).then(async (msg) => {
-    const messageId = msg.message_id;
-    updateProgress(chatId, messageId, progressFile);
-
+const runPythonScript = (script, args, chatId, outputFiles) => {
+  bot.sendMessage(chatId, '*Proses Cek Tunggu Dulu Bray*', { parse_mode: 'Markdown' }).then(async () => {
     const pythonProcess = spawn('python3', [script, ...args]);
-
-    pythonProcess.stdout.on('data', async (data) => {
-      // Assuming progress data is sent from the Python script
-      const progress = parseInt(data.toString().trim(), 10);
-      if (!isNaN(progress) && progress >= 0 && progress <= 100) {
-        await updateProgress(chatId, messageId, progressFile);
-      }
-    });
 
     pythonProcess.on('close', async (code) => {
       let resultsSent = false;
@@ -110,7 +65,7 @@ bot.onText(/\/wpcek/, (msg) => {
     const filePath = await bot.downloadFile(fileId, './');
     runPythonScript('wpcek.py', [filePath, '20'], chatId, [
       'loginSuccess.txt', 'wpfilemanager.txt', 'wptheme.txt', 'page.txt', 'plugin-install.txt'
-    ], 'progress.txt'); // Assuming thread_count is 10
+    ]); // Assuming thread_count is 10
   });
 });
 
@@ -124,7 +79,7 @@ bot.onText(/\/cpcek/, (msg) => {
     const fileId = msg.document.file_id;
 
     const filePath = await bot.downloadFile(fileId, './');
-    runPythonScript('cp.py', [filePath, '20'], chatId, ['good.txt'], 'progress.txt'); // Assuming thread_count is 10
+    runPythonScript('cp.py', [filePath, '20'], chatId, ['good.txt']); // Assuming thread_count is 10
   });
 });
 
@@ -138,7 +93,7 @@ bot.onText(/\/shellcek/, (msg) => {
     const fileId = msg.document.file_id;
 
     const filePath = await bot.downloadFile(fileId, './');
-    runPythonScript('shell.py', [filePath, '20'], chatId, ['goodshell.txt'], 'shell_progress.txt'); // Assuming thread_count is 10
+    runPythonScript('shell.py', [filePath, '20'], chatId, ['goodshell.txt']); // Assuming thread_count is 10
   });
 });
 

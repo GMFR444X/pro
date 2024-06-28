@@ -80,8 +80,7 @@ bot.onText(/\/start/, (msg) => {
       keyboard: [
         ['Menu Exploit'],
         ['/wpcek', '/cpcek', '/shellcek'],
-        ['Menu Lainnya']
-        ['/ai <pesan>'],
+        ['Menu Lainnya', '/ai <pesan>']
       ],
       resize_keyboard: true,
       one_time_keyboard: true
@@ -135,14 +134,9 @@ bot.onText(/\/shellcek/, (msg) => {
 });
 
 // Handle /ai command
-bot.onText(/\/ai/, async (msg, match) => {
+bot.onText(/\/ai (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const pesan = match.input.split(' ')[1];
-
-  if (!pesan) {
-    bot.sendMessage(chatId, 'Iya Selamat Datang Di bot Gudang Saya Adalah ChatGPT Salken👻 ', { reply_to_message_id: msg.message_id });
-    return;
-  }
+  const pesan = match[1];
 
   try {
     bot.sendChatAction(chatId, 'typing');

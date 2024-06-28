@@ -10,32 +10,30 @@ const bot = new TelegramBot(token, { polling: true });
 
 // Helper function to run a Python script and handle its output
 const runPythonScript = (script, args, chatId, outputFiles) => {
-  bot.sendMessage(chatId, '*Proses Cek Tunggu Dulu Bray*', { parse_mode: 'Markdown' }).then(async () => {
-    const pythonProcess = spawn('python3', [script, ...args]);
+  const pythonProcess = spawn('python3', [script, ...args]);
 
-    pythonProcess.on('close', async (code) => {
-      let resultsSent = false;
+  pythonProcess.on('close', async (code) => {
+    let resultsSent = false;
 
-      for (const file of outputFiles) {
-        try {
-          const filePath = path.resolve(file);
-          const stats = await fs.stat(filePath);
+    for (const file of outputFiles) {
+      try {
+        const filePath = path.resolve(file);
+        const stats = await fs.stat(filePath);
 
-          if (stats.size > 0) {
-            await bot.sendDocument(chatId, filePath);
-            resultsSent = true;
-            // Delete the file after sending it
-            await fs.unlink(filePath);
-          }
-        } catch (err) {
-          // Ignore file not found or empty file errors
+        if (stats.size > 0) {
+          await bot.sendDocument(chatId, filePath);
+          resultsSent = true;
+          // Delete the file after sending it
+          await fs.unlink(filePath);
         }
+      } catch (err) {
+        // Ignore file not found or empty file errors
       }
+    }
 
-      if (!resultsSent) {
-        bot.sendMessage(chatId, '*Ga ada Hasil Burik*', { parse_mode: 'Markdown' });
-      }
-    });
+    if (!resultsSent) {
+      bot.sendMessage(chatId, '*Ga ada Hasil Burik*', { parse_mode: 'Markdown' });
+    }
   });
 };
 
@@ -51,6 +49,7 @@ Pilih menu:
    - /shellcek
    • Menu Lainnya
    - /ai <pesan>
+   - /simi <pesan>
   `;
   bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 });
@@ -65,7 +64,7 @@ bot.onText(/\/wpcek/, (msg) => {
     const fileId = msg.document.file_id;
 
     const filePath = await bot.downloadFile(fileId, './');
-    runPythonScript('wpcek.py', [filePath, '20'], chatId, [
+    runPythonScript('wpcek.py', [filePath, '10'], chatId, [
       'loginSuccess.txt', 'wpfilemanager.txt', 'wptheme.txt', 'page.txt', 'plugin-install.txt'
     ]); // Assuming thread_count is 10
   });
@@ -81,7 +80,7 @@ bot.onText(/\/cpcek/, (msg) => {
     const fileId = msg.document.file_id;
 
     const filePath = await bot.downloadFile(fileId, './');
-    runPythonScript('cp.py', [filePath, '20'], chatId, ['good.txt']); // Assuming thread_count is 10
+    runPythonScript('cp.py', [filePath, '10'], chatId, ['good.txt']); // Assuming thread_count is 10
   });
 });
 
@@ -95,7 +94,7 @@ bot.onText(/\/shellcek/, (msg) => {
     const fileId = msg.document.file_id;
 
     const filePath = await bot.downloadFile(fileId, './');
-    runPythonScript('shell.py', [filePath, '20'], chatId, ['goodshell.txt']); // Assuming thread_count is 10
+    runPythonScript('shell.py', [filePath, '10'], chatId, ['goodshell.txt']); // Assuming thread_count is 10
   });
 });
 
@@ -108,6 +107,23 @@ bot.onText(/\/ai (.+)/, async (msg, match) => {
     bot.sendChatAction(chatId, 'typing');
     const response = await axios.get(`https://chatgpt.apinepdev.workers.dev/?question=${encodeURIComponent(pesan)}`);
     const jawaban = response.data.answer;
+
+    bot.sendMessage(chatId, jawaban, { parse_mode: 'Markdown', reply_to_message_id: msg.message_id });
+  } catch (error) {
+    console.error('Error:', error);
+    bot.sendMessage(chatId, 'Maaf, terjadi kesalahan.');
+  }
+});
+
+// Handle /simi command
+bot.onText(/\/simi (.+)/, async (msg, match) => {
+  const chatId = msg.chat.id;
+  const pesan = match[1];
+
+  try {
+    bot.sendChatAction(chatId, 'typing');
+    const response = await axios.get(`https://simsimi.site/api/v2/?mode=talk&lang=en&message=${encodeURIComponent(pesan)}&filter=true`);
+    const jawaban = response.data.success ? response.data.success : "Maaf, terjadi kesalahan.";
 
     bot.sendMessage(chatId, jawaban, { parse_mode: 'Markdown', reply_to_message_id: msg.message_id });
   } catch (error) {

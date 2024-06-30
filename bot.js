@@ -4,11 +4,11 @@ const fs = require('fs').promises;
 const path = require('path');
 const axios = require('axios');
 
-// Ganti dengan token bot Telegram Anda
+// Replace YOUR_TELEGRAM_BOT_TOKEN with your bot's token
 const token = '6674838409:AAHLkaUy93k648M8FlvlhBddJLD0NgfzYd0';
 const bot = new TelegramBot(token, { polling: true });
 
-// Fungsi untuk menjalankan skrip Python dan menangani outputnya
+// Helper function to run a Python script and handle its output
 const runPythonScript = (script, args, chatId, outputFiles) => {
   bot.sendMessage(chatId, '*Proses Cek Tunggu Dulu Bray*', { parse_mode: 'Markdown' });
 
@@ -25,11 +25,11 @@ const runPythonScript = (script, args, chatId, outputFiles) => {
         if (stats.size > 0) {
           await bot.sendDocument(chatId, filePath);
           resultsSent = true;
-          // Hapus file setelah mengirim
+          // Delete the file after sending it
           await fs.unlink(filePath);
         }
       } catch (err) {
-        // Abaikan jika file tidak ditemukan atau kosong
+        // Ignore file not found or empty file errors
       }
     }
 
@@ -39,7 +39,7 @@ const runPythonScript = (script, args, chatId, outputFiles) => {
   });
 };
 
-// Menangani perintah /start
+// Handle /start command
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
   const message = `
@@ -56,13 +56,15 @@ Pilih menu:
   bot.sendMessage(chatId, message, { parse_mode: 'Markdown' });
 });
 
-// Menangani perintah /wpcek
+// Handle /wpcek command
 bot.onText(/\/wpcek/, (msg) => {
   const chatId = msg.chat.id;
+
   bot.sendMessage(chatId, 'Please send me the file.');
 
   bot.once('document', async (msg) => {
     const fileId = msg.document.file_id;
+
     const filePath = await bot.downloadFile(fileId, './');
     runPythonScript('wpcek.py', [filePath, '10'], chatId, [
       'loginSuccess.txt', 'wpfilemanager.txt', 'wptheme.txt', 'page.txt', 'plugin-install.txt'
@@ -70,31 +72,35 @@ bot.onText(/\/wpcek/, (msg) => {
   });
 });
 
-// Menangani perintah /cpcek
+// Handle /cpcek command
 bot.onText(/\/cpcek/, (msg) => {
   const chatId = msg.chat.id;
+
   bot.sendMessage(chatId, 'Please send me the file.');
 
   bot.once('document', async (msg) => {
     const fileId = msg.document.file_id;
+
     const filePath = await bot.downloadFile(fileId, './');
     runPythonScript('cp.py', [filePath, '10'], chatId, ['good.txt']);
   });
 });
 
-// Menangani perintah /shellcek
+// Handle /shellcek command
 bot.onText(/\/shellcek/, (msg) => {
   const chatId = msg.chat.id;
+
   bot.sendMessage(chatId, 'Please send me the file.');
 
   bot.once('document', async (msg) => {
     const fileId = msg.document.file_id;
+
     const filePath = await bot.downloadFile(fileId, './');
     runPythonScript('shell.py', [filePath, '10'], chatId, ['goodshell.txt']);
   });
 });
 
-// Menangani perintah /ai
+// Handle /ai command
 bot.onText(/\/ai (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const pesan = match[1];
@@ -103,6 +109,7 @@ bot.onText(/\/ai (.+)/, async (msg, match) => {
     bot.sendChatAction(chatId, 'typing');
     const response = await axios.get(`https://chatgpt.apinepdev.workers.dev/?question=${encodeURIComponent(pesan)}`);
     const jawaban = response.data.answer;
+
     bot.sendMessage(chatId, jawaban, { parse_mode: 'Markdown', reply_to_message_id: msg.message_id });
   } catch (error) {
     console.error('Error:', error);
@@ -110,7 +117,7 @@ bot.onText(/\/ai (.+)/, async (msg, match) => {
   }
 });
 
-// Menangani perintah /simi
+// Handle /simi command
 bot.onText(/\/simi (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const pesan = match[1];
@@ -119,6 +126,7 @@ bot.onText(/\/simi (.+)/, async (msg, match) => {
     bot.sendChatAction(chatId, 'typing');
     const response = await axios.get(`https://simsimi.site/api/v2/?mode=talk&lang=en&message=${encodeURIComponent(pesan)}&filter=true`);
     const jawaban = response.data.success ? response.data.success : "Maaf, terjadi kesalahan.";
+
     bot.sendMessage(chatId, jawaban, { parse_mode: 'Markdown', reply_to_message_id: msg.message_id });
   } catch (error) {
     console.error('Error:', error);
@@ -126,5 +134,5 @@ bot.onText(/\/simi (.+)/, async (msg, match) => {
   }
 });
 
-// Menjalankan bot
+// Start the bot
 console.log('Bot is running...');

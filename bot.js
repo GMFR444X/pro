@@ -85,7 +85,7 @@ bot.onText(/\/wpcek/, (msg) => {
         const fileId = msg.document.file_id;
 
         const filePath = await bot.downloadFile(fileId, './');
-        runPythonScript('wpcek.py', [filePath, '10'], chatId, [
+        runPythonScript('wpcek.py', [filePath, '20'], chatId, [
             'loginSuccess.txt', 'wpfilemanager.txt', 'wptheme.txt', 'page.txt', 'plugin-install.txt'
         ]);
     });
@@ -101,7 +101,7 @@ bot.onText(/\/cpcek/, (msg) => {
         const fileId = msg.document.file_id;
 
         const filePath = await bot.downloadFile(fileId, './');
-        runPythonScript('cp.py', [filePath, '10'], chatId, ['good.txt']);
+        runPythonScript('cp.py', [filePath, '20'], chatId, ['good.txt']);
     });
 });
 
@@ -115,7 +115,7 @@ bot.onText(/\/shellcek/, (msg) => {
         const fileId = msg.document.file_id;
 
         const filePath = await bot.downloadFile(fileId, './');
-        runPythonScript('shell.py', [filePath, '10'], chatId, ['goodshell.txt']);
+        runPythonScript('shell.py', [filePath, '20'], chatId, ['goodshell.txt']);
     });
 });
 
@@ -129,7 +129,7 @@ bot.onText(/\/kcfinderscan/, (msg) => {
         const fileId = msg.document.file_id;
 
         const filePath = await bot.downloadFile(fileId, './');
-        runPythonScript('kcfinder.py', [filePath, '10'], chatId, ['result_kcfinder.txt']);
+        runPythonScript('kcfinder.py', [filePath, '20'], chatId, ['result_kcfinder.txt']);
     });
 });
 
